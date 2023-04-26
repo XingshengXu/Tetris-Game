@@ -7,8 +7,7 @@ These settings can be easily accessed and used throughout the game by importing 
 """
 
 # Game Play Settings
-FPS = 10
-FALL_SPEED = 30
+FPS = 30
 MOVING_SPEED = 30
 FRAME_INCREMENT = 1
 
@@ -33,6 +32,7 @@ TETRIMINO_DIMENSIONS = {
 # Font Path
 
 # Game Events
+TETRIMINO_LOCKED = pg.USEREVENT + 1
 
 # Spawn Frequence and Delay Time
 
@@ -48,3 +48,43 @@ TETRIMINOS = {
 }
 
 # Sound Path
+
+
+# The relative positions for each rotation of the Tetrimino types.
+# The values represent the relative (x, y) coordinates for each block
+# in the Tetrimino, with respect to the center block.
+TETRIMINO_ROTATIONS = {
+    'I': [
+        [(-1, 0), (0, 0), (1, 0), (2, 0)],
+        [(1, -1), (1, 0), (1, 1), (1, 2)]
+    ],
+    'O': [
+        [(0, 0), (0, 1), (1, 0), (1, 1)]
+    ],
+    'J': [
+        [(-1, 1), (-1, 0), (0, 0), (1, 0)],
+        [(0, -1), (1, -1), (0, 0), (0, 1)],
+        [(1, -1), (1, 0), (0, 0), (-1, 0)],
+        [(0, 1), (-1, 1), (0, 0), (0, -1)]
+    ],
+    'L': [
+        [(-1, 0), (0, 0), (1, 0), (1, 1)],
+        [(0, -1), (0, 0), (0, 1), (1, 1)],
+        [(1, 0), (0, 0), (-1, 0), (-1, -1)],
+        [(0, 1), (0, 0), (0, -1), (-1, -1)]
+    ],
+    'S': [
+        [(0, 0), (1, 0), (-1, 1), (0, 1)],
+        [(0, 0), (0, 1), (1, -1), (1, 0)]
+    ],
+    'T': [
+        [(-1, 0), (0, 0), (1, 0), (0, 1)],
+        [(0, -1), (0, 0), (0, 1), (1, 0)],
+        [(1, 0), (0, 0), (-1, 0), (0, -1)],
+        [(0, 1), (0, 0), (0, -1), (-1, 0)]
+    ],
+    'Z': [
+        [(-1, 0), (0, 0), (0, 1), (1, 1)],
+        [(0, 0), (0, 1), (1, 0), (1, -1)]
+    ]
+}
