@@ -32,37 +32,18 @@ class Block(pg.sprite.Sprite):
         self.coord = vec(coord) + TETROMINO_SPAWN_OFFSET
         self.image = self.tetromino.image
         self.rect = self.image.get_rect(topleft=self.coord * GRID_WIDTH)
-        self.dir = 'down'
 
-    def tetromino_fall(self):
-        new_coord = self.coord + MOVEMENTS['down']
-        if not self.check_collision(new_coord):
-            self.coord = new_coord
-            self.rect.topleft = self.coord * GRID_WIDTH
+    def block_move(self):
+        self.rect.topleft = self.coord * GRID_WIDTH
 
-    def tetromino_move(self):
-        key = pg.key.get_pressed()
-        if key[pg.K_LEFT]:
-            self.dir = 'left'
-        elif key[pg.K_RIGHT]:
-            self.dir = 'right'
-
-        new_coord = self.coord + MOVEMENTS[self.dir]
-        if not tetrominos.sprites.check_collision(new_coord):
-            self.coord = new_coord
-            self.rect.topleft = self.coord * GRID_WIDTH
-
-    def check_collision(self, new_coord):
-        x, y = int(new_coord.x), int(new_coord.y)
+    def check_collision(self, coord):
+        x, y = int(coord.x), int(coord.y)
         if 0 <= x < FIELD_WIDTH and y < FIELD_HEIGHT:
             return False
         return True
 
     def update(self):
-        if game.anim_trigger:
-            self.tetromino_fall()
-        if game.control_trigger:
-            self.tetromino_move()
+        self.block_move()
 
 
 class Tetromino():
@@ -76,8 +57,40 @@ class Tetromino():
         self.image = block_img[TETROMINO_TILETYPE[self.type]]
         self.blocks = [Block(self, coord) for coord in TETROMINOES[self.type]]
 
-    def is_collide(self, block_pos):
-        return any(map(Block.is_collide, self.blocks, block_pos))
+    def tetromino_fall(self):
+        new_block_coord = [block.coord + MOVEMENTS['down'] for block in self.blocks]
+        is_collide = self.is_collide(new_block_coord)
+
+        if not is_collide:
+            for block in self.blocks:
+                block.coord += MOVEMENTS['down']
+
+    def tetromino_move(self, direction=None):
+        key = pg.key.get_pressed()
+        if key[pg.K_LEFT]:
+            direction = 'left'
+        elif key[pg.K_RIGHT]:
+            direction = 'right'
+        
+        if direction:
+            new_block_coord = [block.coord + MOVEMENTS[direction] for block in self.blocks]
+            is_collide = self.is_collide(new_block_coord)
+
+            if not is_collide:
+                for block in self.blocks:
+                    block.coord += MOVEMENTS[direction]
+
+    def is_collide(self, block_coords):
+        return any(Block.check_collision(block, coord) for block, coord in zip(self.blocks, block_coords))
+
+
+    
+    def update(self):
+        if game.anim_trigger:
+            self.tetromino_fall()
+        if game.control_trigger:
+            self.tetromino_move()
+
 #     def Tetromino_locked(self):
 #         if self.rect.bottom + MOVING_SPEED > HEIGHT:
 #             pg.event.post(pg.event.Event(Tetromino_LOCKED))
@@ -146,6 +159,9 @@ class Game:
             # Display Game Background
             self.draw_background()
 
+            # Update Tetromino
+            current_tetromino.update()
+
             # Draw Sprites
             tetrominos.draw(self.screen)
             # Update Sprites
@@ -160,8 +176,9 @@ class Game:
 # Create Class Instances and Add Sprites
 game = Game()
 
-tetrominos = pg.sprite.SingleGroup()
-tetrominos.add(Tetromino('Z').blocks)
+current_tetromino = Tetromino('T')
+tetrominos = pg.sprite.Group()
+tetrominos.add(current_tetromino.blocks)
 
 # Run Main Loop
 game.main_loop()
