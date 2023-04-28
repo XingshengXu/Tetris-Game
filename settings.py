@@ -16,7 +16,8 @@ MOVING_SPEED = 40
 MOVEMENTS = {
     'left': vec(-1, 0),
     'right': vec(1, 0),
-    'down': vec(0, 1)
+    'down': vec(0, 1),
+    'fastdown': vec(0, 1)
 }
 
 # Game Dimensions
@@ -36,14 +37,17 @@ TETROMINO_SPAWN_OFFSET = vec(FIELD_WIDTH // 2, 0)
 # Font Path
 
 # Game Events
-FALL_TRIGGER = pg.USEREVENT + 1
-CONTROL_TRIGGER = pg.USEREVENT + 2
+FALL_TRIGGER = pg.USEREVENT + 1  # Tetrimino Fall
+ANIM_TRIGGER = pg.USEREVENT + 2  # Tetrimino Animation
+FAST_FALL_TRIGGER = pg.USEREVENT + 3  # Tetrimino Fast Fall
 
 # TETROMINO_LOCKED = pg.USEREVENT + 1
 
 # Event Frequence and Delay Time
 FALL_FREQ = 500  # Tetrimino Fall Frequency
-CONTROL_FREQ = 100  # Tetrimino Control Frequency
+ANIM_TRIGGER_FREQ = 150  # Tetrimino Animation Frequency
+FAST_FALL_FREQ = 15  # Tetrimino Fast Fall Frequency
+
 # Image Path
 TETROMINO_TILES = 'assets/tetrominos/tetromino_tiles.png'
 
@@ -62,11 +66,11 @@ TETROMINO_TILETYPE = {
 
 # Tetromino Shapes
 TETROMINOES = {
-    'O': [(0, 0), (-1, 0), (-1, -1), (0, -1)],
+    'O': [(0, 0), (0, -1), (1, 0), (1, -1)],
     'T': [(0, 0), (-1, 0), (1, 0), (0, -1)],
     'S': [(0, 0), (-1, 0), (0, -1), (1, -1)],
-    'Z': [(0, 0), (1, 0), (-1, -1), (0, -1)],
-    'J': [(0, 0), (-1, 0), (1, 0), (-1, -1)],
-    'L': [(0, 0), (-2, 0), (-1, 0), (0, -1)],
-    'I': [(0, 0), (-2, 0), (-1, 0), (1, 0)]
+    'Z': [(0, 0), (1, 0), (0, -1), (-1, -1)],
+    'J': [(0, 0), (-1, 0), (0, -1), (0, -2)],
+    'L': [(0, 0), (1, 0), (0, -1), (0, -2)],
+    'I': [(0, 0), (0, 1), (0, -1), (0, -2)],
 }

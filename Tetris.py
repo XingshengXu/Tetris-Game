@@ -36,9 +36,14 @@ class Block(pg.sprite.Sprite):
     def block_move(self):
         self.rect.topleft = self.coord * GRID_WIDTH
 
+    def block_rotate(self, origin_coord):
+        translated_coord = self.coord - origin_coord
+        rotated_coord = translated_coord.rotate(90)
+        return rotated_coord + origin_coord
+
     def check_collision(self, coord):
         x, y = int(coord.x), int(coord.y)
-        if 0 <= x < FIELD_WIDTH and y < FIELD_HEIGHT:
+        if 0 <= x < FIELD_WIDTH and y < FIELD_HEIGHT and (y < 0 or not game.field_array[y][x]):
             return False
         return True
 
@@ -47,8 +52,10 @@ class Block(pg.sprite.Sprite):
 
 
 class Tetromino():
-    def __init__(self, tetrominosType):
-        self.type = tetrominosType
+    def __init__(self):
+        self.type = choice(list(TETROMINOES.keys()))
+        self.landing = False
+        self.speed_up = False
 
         # Load Block Image
         block_img = load_sprite_sheet(
@@ -57,13 +64,25 @@ class Tetromino():
         self.image = block_img[TETROMINO_TILETYPE[self.type]]
         self.blocks = [Block(self, coord) for coord in TETROMINOES[self.type]]
 
+    def tetromino_rotate(self):
+        origin_coord = self.blocks[0].coord
+        new_block_coord = [block.block_rotate(
+            origin_coord) for block in self.blocks]
+        is_collide = self.is_collide(new_block_coord)
+        if not is_collide:
+            for block, new_coord in zip(self.blocks, new_block_coord):
+                block.coord = new_coord
+
     def tetromino_fall(self):
-        new_block_coord = [block.coord + MOVEMENTS['down'] for block in self.blocks]
+        new_block_coord = [block.coord + MOVEMENTS['down']
+                           for block in self.blocks]
         is_collide = self.is_collide(new_block_coord)
 
         if not is_collide:
             for block in self.blocks:
                 block.coord += MOVEMENTS['down']
+        else:
+            self.landing = True
 
     def tetromino_move(self, direction=None):
         key = pg.key.get_pressed()
@@ -71,9 +90,13 @@ class Tetromino():
             direction = 'left'
         elif key[pg.K_RIGHT]:
             direction = 'right'
-        
+        elif key[pg.K_UP]:
+            self.tetromino_rotate()
+        elif key[pg.K_DOWN]:
+            self.speed_up = True
         if direction:
-            new_block_coord = [block.coord + MOVEMENTS[direction] for block in self.blocks]
+            new_block_coord = [block.coord + MOVEMENTS[direction]
+                               for block in self.blocks]
             is_collide = self.is_collide(new_block_coord)
 
             if not is_collide:
@@ -83,18 +106,22 @@ class Tetromino():
     def is_collide(self, block_coords):
         return any(Block.check_collision(block, coord) for block, coord in zip(self.blocks, block_coords))
 
+    def put_tetromino_blocks_in_array(self):
+        for block in self.blocks:
+            x, y = int(block.coord.x), int(block.coord.y)
+            game.field_array[y][x] = block
 
-    
     def update(self):
-        if game.anim_trigger:
+        trigger = [game.fall_trigger, game.fast_fall_trigger][self.speed_up]
+        if trigger:
             self.tetromino_fall()
-        if game.control_trigger:
+        if game.anim_trigger:
             self.tetromino_move()
-
-#     def Tetromino_locked(self):
-#         if self.rect.bottom + MOVING_SPEED > HEIGHT:
-#             pg.event.post(pg.event.Event(Tetromino_LOCKED))
-#             self.kill()
+        if self.landing:
+            self.speed_up = False
+            self.put_tetromino_blocks_in_array()
+            pg.time.delay(300)
+            game.current_tetromino = game.spawn_tetromino()
 
 
 class Game:
@@ -102,6 +129,9 @@ class Game:
     def __init__(self):
         self.setup()
         self.load_images()
+        self.field_array = self.get_field_array()
+        self.tetrominos = pg.sprite.Group()
+        self.current_tetromino = self.spawn_tetromino()
 
     def setup(self):
         self.game_active = False
@@ -128,25 +158,36 @@ class Game:
     def draw_background(self):
         self.screen.fill('black')
 
+    def get_field_array(self):
+        return [[0 for x in range(FIELD_WIDTH)] for y in range(FIELD_HEIGHT)]
+
     def set_timer(self):
+        self.fall_trigger = False
         self.anim_trigger = False
-        self.control_trigger = False
+        self.fast_fall_trigger = False
         pg.time.set_timer(FALL_TRIGGER, FALL_FREQ)
-        pg.time.set_timer(CONTROL_TRIGGER, CONTROL_FREQ)
+        pg.time.set_timer(ANIM_TRIGGER, ANIM_TRIGGER_FREQ)
+        pg.time.set_timer(FAST_FALL_TRIGGER, FAST_FALL_FREQ)
+
+    def spawn_tetromino(self):
+        new_tetromino = Tetromino()
+        self.tetrominos.add(new_tetromino.blocks)
+        return new_tetromino
 
     def handle_events(self):
+        self.fall_trigger = False
         self.anim_trigger = False
-        self.control_trigger = False
+        self.fast_fall_trigger = False
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 exit()
             if event.type == FALL_TRIGGER:
+                self.fall_trigger = True
+            if event.type == ANIM_TRIGGER:
                 self.anim_trigger = True
-            if event.type == CONTROL_TRIGGER:
-                self.control_trigger = True
-            # if event.type == Tetromino_LOCKED:
-            #     Tetrominos.add(Tetromino('I'))
+            if event.type == FAST_FALL_TRIGGER:
+                self.fast_fall_trigger = True
 
     def main_loop(self):
         """This is the game main loop."""
@@ -160,12 +201,12 @@ class Game:
             self.draw_background()
 
             # Update Tetromino
-            current_tetromino.update()
+            self.current_tetromino.update()
 
             # Draw Sprites
-            tetrominos.draw(self.screen)
+            self.tetrominos.draw(self.screen)
             # Update Sprites
-            tetrominos.update()
+            self.tetrominos.update()
 
             # Draw Grid
             self.draw_grid()
@@ -173,12 +214,8 @@ class Game:
             pg.display.update()
 
 
-# Create Class Instances and Add Sprites
+# Create Class Instances and Sprite Group
 game = Game()
-
-current_tetromino = Tetromino('T')
-tetrominos = pg.sprite.Group()
-tetrominos.add(current_tetromino.blocks)
 
 # Run Main Loop
 game.main_loop()
