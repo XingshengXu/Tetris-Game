@@ -46,7 +46,7 @@ FAST_FALL_TRIGGER = pg.USEREVENT + 3  # Tetrimino Fast Fall
 # Event Frequence and Delay Time
 FALL_FREQ = 500  # Tetrimino Fall Frequency
 ANIM_TRIGGER_FREQ = 150  # Tetrimino Animation Frequency
-FAST_FALL_FREQ = 15  # Tetrimino Fast Fall Frequency
+FAST_FALL_FREQ = 5  # Tetrimino Fast Fall Frequency
 
 # Image Path
 TETROMINO_TILES = 'assets/tetrominos/tetromino_tiles.png'
@@ -66,11 +66,53 @@ TETROMINO_TILETYPE = {
 
 # Tetromino Shapes
 TETROMINOES = {
-    'O': [(0, 0), (0, -1), (1, 0), (1, -1)],
     'T': [(0, 0), (-1, 0), (1, 0), (0, -1)],
-    'S': [(0, 0), (-1, 0), (0, -1), (1, -1)],
-    'Z': [(0, 0), (1, 0), (0, -1), (-1, -1)],
+    'O': [(0, 0), (0, -1), (1, 0), (1, -1)],
     'J': [(0, 0), (-1, 0), (0, -1), (0, -2)],
     'L': [(0, 0), (1, 0), (0, -1), (0, -2)],
     'I': [(0, 0), (0, 1), (0, -1), (0, -2)],
+    'S': [(0, 0), (-1, 0), (0, -1), (1, -1)],
+    'Z': [(0, 0), (1, 0), (0, -1), (-1, -1)]
+}
+
+TETROMINO_ROTATIONS = {
+'O': [
+    [(0, 0), (-1, 0), (-1, -1), (0, -1)]  # 0 degrees
+],
+
+'T': [
+    [(0, 0), (-1, 0), (1, 0), (0, -1)],   # 0 degrees
+    [(0, 0), (0, 1), (0, -1), (-1, 0)],   # 90 degrees
+    [(0, 0), (1, 0), (-1, 0), (0, 1)],    # 180 degrees
+    [(0, 0), (0, -1), (0, 1), (1, 0)]     # 270 degrees
+],
+
+'S': [
+    [(0, 0), (-1, 0), (0, -1), (1, -1)],  # 0 degrees
+    [(0, 0), (0, 1), (-1, 0), (-1, -1)]   # 90 degrees
+],
+
+'Z': [
+    [(0, 0), (1, 0), (-1, -1), (0, -1)],  # 0 degrees
+    [(0, 0), (0, 1), (1, -1), (1, 0)]     # 90 degrees
+],
+
+'J': [
+    [(0, 0), (-1, 0), (0, -1), (0, -2)],  # 0 degrees
+    [(0, 0), (0, 1), (-1, 0), (-2, 0)],    # 90 degrees
+    [(0, 0), (1, 0), (0, 1), (0, 2)],     # 180 degrees
+    [(0, 0), (0, -1), (1, 0), (2, 0)]   # 270 degrees
+],
+
+'L': [
+    [(0, 0), (1, 0), (0, -1), (0, -2)],   # 0 degrees
+    [(0, 0), (0, -1), (-1, 0), (-2, 0)],    # 90 degrees
+    [(0, 0), (-1, 0), (0, 1), (0, 2)],    # 180 degrees
+    [(0, 0), (0, 1), (1, 0), (2, 0)]   # 270 degrees
+],
+
+'I': [
+    [(0, 0), (0, 1), (0, -1), (0, -2)],   # 0 degrees
+    [(0, 0), (-1, 0), (1, 0), (2, 0)]     # 90 degrees
+]
 }

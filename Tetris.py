@@ -36,10 +36,17 @@ class Block(pg.sprite.Sprite):
     def block_move(self):
         self.rect.topleft = self.coord * GRID_WIDTH
 
-    def block_rotate(self, origin_coord):
+    def block_rotate(self, origin_coord, rotation_idx):
+        if self.tetromino.type == "O":
+            return self.coord
+
         translated_coord = self.coord - origin_coord
-        rotated_coord = translated_coord.rotate(90)
-        return rotated_coord + origin_coord
+        rotation_idx_prev = (rotation_idx - 1) % len(TETROMINO_ROTATIONS[self.tetromino.type])
+        translated_idx = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx_prev].index(translated_coord)
+        rotated_coord  = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx][translated_idx]
+        return vec(rotated_coord) + origin_coord
+    
+        
 
     def check_collision(self, coord):
         x, y = int(coord.x), int(coord.y)
@@ -54,6 +61,7 @@ class Block(pg.sprite.Sprite):
 class Tetromino():
     def __init__(self):
         self.type = choice(list(TETROMINOES.keys()))
+        self.rotation_idx = 0
         self.landing = False
         self.speed_up = False
 
@@ -65,13 +73,16 @@ class Tetromino():
         self.blocks = [Block(self, coord) for coord in TETROMINOES[self.type]]
 
     def tetromino_rotate(self):
+        self.rotation_idx = (self.rotation_idx + 1) % len(TETROMINO_ROTATIONS[self.type])
         origin_coord = self.blocks[0].coord
-        new_block_coord = [block.block_rotate(
-            origin_coord) for block in self.blocks]
+        new_block_coord = [block.block_rotate(origin_coord, self.rotation_idx) for block in self.blocks]
         is_collide = self.is_collide(new_block_coord)
         if not is_collide:
             for block, new_coord in zip(self.blocks, new_block_coord):
                 block.coord = new_coord
+        else:
+            self.rotation_idx = (self.rotation_idx - 1) % len(TETROMINO_ROTATIONS[self.type])
+
 
     def tetromino_fall(self):
         new_block_coord = [block.coord + MOVEMENTS['down']
@@ -83,6 +94,7 @@ class Tetromino():
                 block.coord += MOVEMENTS['down']
         else:
             self.landing = True
+        self.speed_up = False
 
     def tetromino_move(self, direction=None):
         key = pg.key.get_pressed()
@@ -120,7 +132,7 @@ class Tetromino():
         if self.landing:
             self.speed_up = False
             self.put_tetromino_blocks_in_array()
-            pg.time.delay(300)
+            pg.time.delay(500)
             game.current_tetromino = game.spawn_tetromino()
 
 
@@ -132,7 +144,7 @@ class Game:
         self.field_array = self.get_field_array()
         self.tetrominos = pg.sprite.Group()
         self.current_tetromino = self.spawn_tetromino()
-
+        
     def setup(self):
         self.game_active = False
         self.clock = pg.time.Clock()
