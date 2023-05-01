@@ -33,6 +33,8 @@ def render_font(text, font, color, center):
 
 
 class Block(pg.sprite.Sprite):
+    """Represents an individual block of a Tetromino."""
+
     def __init__(self, tetromino, coord):
         super().__init__()
         self.tetromino = tetromino
@@ -40,6 +42,7 @@ class Block(pg.sprite.Sprite):
         self.image = self.tetromino.image
         self.rect = self.image.get_rect(topleft=self.coord * GRID_WIDTH)
         self.alive = True
+
         # Special Effects
         self.sfx_image = self.image.copy()
         self.sfx_image.set_alpha(200)
@@ -48,11 +51,9 @@ class Block(pg.sprite.Sprite):
         self.cycle_counter = 0
 
     def sfx_duration(self):
-        if game.anim_trigger:
+        if game.anim_trigger and self.cycle_counter < self.sfx_cycles:
             self.cycle_counter += 1
-            if self.cycle_counter > self.sfx_cycles:
-                self.cycle_counter = 0
-                return True
+        return self.cycle_counter >= self.sfx_cycles
 
     def sfx_play(self):
         self.image = self.sfx_image
@@ -64,13 +65,10 @@ class Block(pg.sprite.Sprite):
         self.rect.topleft = self.coord * GRID_WIDTH
 
     def block_rotate(self, origin_coord, rotation_idx):
-        if self.tetromino.type == "O":
-            return self.coord
-
         translated_coord = self.coord - origin_coord
-        rotation_idx_prev = (
+        rotation_idx_curr = (
             rotation_idx - 1) % len(TETROMINO_ROTATIONS[self.tetromino.type])
-        translated_idx = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx_prev].index(
+        translated_idx = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx_curr].index(
             translated_coord)
         rotated_coord = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx][translated_idx]
         return vec(rotated_coord) + origin_coord
@@ -94,6 +92,8 @@ class Block(pg.sprite.Sprite):
 
 
 class Tetromino():
+    """Represents a Tetromino object made up of individual blocks."""
+
     def __init__(self):
         self.type = choice(list(TETROMINOES.keys()))
         self.rotation_idx = 0
@@ -115,8 +115,6 @@ class Tetromino():
             origin_coord, self.rotation_idx) for block in self.blocks]
         is_collide = self.is_collide(new_block_coord)
         if not is_collide:
-            game.rotate_sound.play()
-            game.rotate_sound.set_volume(0.3)
             for block, new_coord in zip(self.blocks, new_block_coord):
                 block.coord = new_coord
         else:
@@ -143,8 +141,13 @@ class Tetromino():
             direction = 'right'
         elif key[pg.K_UP]:
             self.tetromino_rotate()
+            game.rotate_sound.play()
+            game.rotate_sound.set_volume(0.3)
         elif key[pg.K_DOWN]:
             self.speed_up = True
+            game.fall_sound.play()
+            game.fall_sound.set_volume(0.3)
+
         if direction:
             new_block_coord = [block.coord + MOVEMENTS[direction]
                                for block in self.blocks]
@@ -175,13 +178,16 @@ class Tetromino():
                 pg.time.delay(GAMEOVER_DELAY)
             else:
                 game.landing_sound.play()
-                game.landing_sound.set_volume(0.5)
                 self.speed_up = False
                 self.put_tetromino_blocks_in_array()
                 game.current_tetromino = game.spawn_tetromino()
 
 
 class Game:
+    """Main game class for Tetris Game.
+    The Game class is the core component of the Tetris game, managing the main game loop, 
+    game events, and rendering. It is responsible for handling user input, updating the 
+    game state, and drawing the game objects on the screen."""
 
     def __init__(self):
         self.setup()
@@ -216,22 +222,24 @@ class Game:
         self.level_text, self.level_text_rect = render_font(
             'Level', GAME_FONT, 'white', LEVEL_TEXT_POS)
         self.game_mainName, self.game_mainName_rect = render_font(
-            'Tetris', TITLE_FONT, 'yellow', (WIDTH // 2, GAMENAME_HEIGHT))
+            'Tetris', TITLE_FONT, 'yellow2', (WIDTH // 2, GAMENAME_HEIGHT))
         self.game_message, self.game_message_rect = render_font(
-            'Press Space to Play', GAME_FONT, 'red', (WIDTH // 2, GAMEMESSAGE_HEIGHT))
+            'Press Space to Play', GAME_FONT, 'green', (WIDTH // 2, GAMEMESSAGE_HEIGHT))
         self.score_HUD, self.score_HUD_rect = render_font(
-            'Your Final Score:', GAME_FONT, 'red', (WIDTH // 2, GAMEMESSAGE_HEIGHT))
+            'Your Final Score:', GAME_FONT, 'green', (WIDTH // 2, GAMEMESSAGE_HEIGHT))
 
     def load_images(self):
-        # Load Pregame HUD Image
+        self.background_img = pg.transform.scale(
+            pg.image.load(BACKGROUND_IMAGE).convert(), (WIDTH, HEIGHT))
         self.manualHUD_img = pg.transform.scale(
-            pg.image.load(MANUAL_HUD).convert(), (400, 300))
+            pg.image.load(MANUAL_HUD).convert_alpha(), (400, 300))
 
     def load_sounds(self):
         self.play_pregame_music()
         self.line_clear_sound = pg.mixer.Sound(LINE_CLEAR_SOUND)
         self.four_line_clear_sound = pg.mixer.Sound(FOURLINE_CLEAR_SOUND)
         self.rotate_sound = pg.mixer.Sound(ROTATE_SOUND)
+        self.fall_sound = pg.mixer.Sound(FALL_SOUND)
         self.levelup_sound = pg.mixer.Sound(LEVELUP_SOUND)
         self.landing_sound = pg.mixer.Sound(LANDING_SOUND)
 
@@ -264,19 +272,26 @@ class Game:
         return [[0 for x in range(FIELD_WIDTH)] for y in range(FIELD_HEIGHT)]
 
     def check_full_lines(self):
+        # Start at the bottom row of the field
         row = FIELD_HEIGHT - 1
+        # Iterate through each row from bottom to top
         for y in range(FIELD_HEIGHT - 1, -1, -1):
+            # Iterate through each cell in the row
             for x in range(FIELD_WIDTH):
+                # Copy the cell from row y to row 'row'
                 self.field_array[row][x] = self.field_array[y][x]
-
+                # Update the coordinates of the cell if it exists
                 if self.field_array[y][x]:
                     self.field_array[row][x].coord = vec(x, y)
-            if sum(map(bool, self.field_array[y])) < FIELD_WIDTH:
+            # Check if the row is not full
+            if sum([bool(cell) for cell in self.field_array[y]]) < FIELD_WIDTH:
                 row -= 1
             else:
+                # The row is full, so mark each cell as not alive and set its value to 0
                 for x in range(FIELD_WIDTH):
                     self.field_array[row][x].alive = False
                     self.field_array[row][x] = 0
+                # Increment the count of full lines
                 self.full_lines += 1
 
     def update_fall_speed(self):
@@ -287,10 +302,10 @@ class Game:
     def cal_score(self):
         if self.full_lines == 4:
             self.four_line_clear_sound.play()
-            self.four_line_clear_sound.set_volume(0.3)
+            self.four_line_clear_sound.set_volume(0.5)
         elif self.full_lines >= 1:
             self.line_clear_sound.play()
-            self.line_clear_sound.set_volume(0.3)
+            self.line_clear_sound.set_volume(0.5)
 
         self.score += REWARD_POINTS[self.full_lines] * (self.level + 1)
         self.total_lines += self.full_lines
@@ -327,10 +342,9 @@ class Game:
 
     def draw_next_tetromino(self):
         for block in self.next_tetromino.blocks:
-            block_image = block.image
-            block_rect = block_image.get_rect(
+            block_rect = block.image.get_rect(
                 topleft=(block.coord * GRID_WIDTH) + NEXT_TETROMINO_OFFSET)
-            self.screen.blit(block_image, block_rect)
+            self.screen.blit(block.image, block_rect)
 
     def display_HUD(self):
         self.screen.blit(self.next_text, self.next_text_rect)
@@ -363,7 +377,7 @@ class Game:
         else:
             self.screen.blit(self.score_HUD, self.score_HUD_rect)
             score_message, score_message_rect = render_font(
-                f"{self.score}", GAME_FONT, 'red',
+                f"{self.score}", GAME_FONT, 'green',
                 (WIDTH // 2, SCOREMESSAGE_HEIGHT))
             self.screen.blit(score_message, score_message_rect)
 
@@ -407,14 +421,17 @@ class Game:
         self.draw_background()
         # Update Tetromino
         self.current_tetromino.update()
-        # Draw Sprites
+        # Draw Block Sprites
         self.tetrominos.draw(self.screen)
-        # Update Sprites
+        # Update Block Sprites
         self.tetrominos.update()
         # Draw Grid
         self.draw_grid()
+        # Check Full Lines
         self.check_full_lines()
+        # Calculate Score
         self.cal_score()
+        # Calculate Level
         self.cal_level()
 
     def main_loop(self):
@@ -422,13 +439,13 @@ class Game:
         while True:
             self.clock.tick(FPS)
             self.frame_counter += 1
-            # Handle Events
             self.handle_events()
+            # Generate In-game Updates
             if self.game_active:
                 self.game_update()
             else:
                 # Generate Pre-game Screen
-                self.screen.fill('black')
+                self.screen.blit(self.background_img, (0, 0))
                 self.display_pregame_messages()
             pg.display.update()
 

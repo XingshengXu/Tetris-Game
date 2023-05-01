@@ -45,18 +45,19 @@ TETROMINO_SPAWN_OFFSET = vec(FIELD_WIDTH // 2, 0)
 # Next Tetromino Display Position
 NEXT_TETROMINO_OFFSET = vec((WIDTH - GRID_WIDTH) //
                             2, HEIGHT // 4 + GRID_WIDTH)
-NEXT_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 8
-SCORE_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 2
-SCORE_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 5 // 8
+NEXT_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 8  # Next Text Display Position
+SCORE_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 2  # Score Text Display Position
+SCORE_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 5 // 8  # Score Display Position
+# Level Text Display Position
 LEVEL_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 3 // 4
-LEVEL_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 7 // 8
-GAMENAME_HEIGHT = 100  # Game Name Height
+LEVEL_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 7 // 8  # Level Display Position
+GAMENAME_HEIGHT = 150  # Game Name Height
 MANUAL_HUD_POS = 110, 450  # Manual HUD Position
 GAMEMESSAGE_HEIGHT = 300  # Game Message Height
 SCOREMESSAGE_HEIGHT = 400  # Score Message Heigh
 
 # Font Path
-TITLE_FONT = pg.font.Font('assets/font/Red October.ttf', 100)
+TITLE_FONT = pg.font.Font('assets/font/Red October.ttf', 120)
 GAME_FONT = pg.font.Font('assets/font/Red October.ttf', 40)
 
 # Game Events
@@ -74,6 +75,7 @@ GAMEOVER_DELAY = 3000  # Game Over Delay
 
 # Image Path
 TETROMINO_TILES = 'assets/tetrominos/tetromino_tiles.png'
+BACKGROUND_IMAGE = 'assets/hud/Tetris Background.png'
 MANUAL_HUD = 'assets/hud/manual.png'
 
 TETROMINO_TILETYPE = {
@@ -91,7 +93,8 @@ PREGAME_MUSIC = 'assets/sound/Korobeiniki.mp3'
 GAMEOVER_MUSIC = 'assets/sound/sndGameOver.ogg'
 LINE_CLEAR_SOUND = 'assets/sound/sndLineClear.ogg'
 FOURLINE_CLEAR_SOUND = 'assets/sound/sndFourLinesClear.ogg'
-ROTATE_SOUND = 'assets/sound/sndRotateLeft.ogg'
+ROTATE_SOUND = 'assets/sound/sndRotate.ogg'
+FALL_SOUND = 'assets/sound/sndFall.ogg'
 LEVELUP_SOUND = 'assets/sound/sndLevelUp.ogg'
 LANDING_SOUND = 'assets/sound/sndTetronimoLanding.ogg'
 
