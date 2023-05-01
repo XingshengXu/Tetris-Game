@@ -73,7 +73,7 @@ class Block(pg.sprite.Sprite):
         rotated_coord = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx][translated_idx]
         return vec(rotated_coord) + origin_coord
 
-    def block_destory(self):
+    def block_destroy(self):
         if not self.alive:
             if not self.sfx_duration():
                 self.sfx_play()
@@ -87,7 +87,7 @@ class Block(pg.sprite.Sprite):
         return True
 
     def update(self):
-        self.block_destory()
+        self.block_destroy()
         self.block_move()
 
 
