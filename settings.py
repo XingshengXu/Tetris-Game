@@ -11,7 +11,7 @@ vec = pg.math.Vector2
 
 # Game Play Settings
 FPS = 60
-LEVELUP_LINES = 1
+LEVELUP_LINES = 20
 LEVELUP_FREQ = 20
 
 MOVEMENTS = {
@@ -42,31 +42,39 @@ COLUMN_NUMBER = (WIDTH - HUD_WIDTH) // GRID_WIDTH  # Column Number
 TILE_SIZE = TILE_WIDTH, TILE_HEIGHT = 8, 8  # Tetromino Tile Dimensions
 # Tetromino Spawn Position Offset
 TETROMINO_SPAWN_OFFSET = vec(FIELD_WIDTH // 2, 0)
-NEXT_TETROMINO_OFFSET = vec((WIDTH - GRID_WIDTH) // 2, HEIGHT // 4 + GRID_WIDTH) # Next Tetromino Display Position
+# Next Tetromino Display Position
+NEXT_TETROMINO_OFFSET = vec((WIDTH - GRID_WIDTH) //
+                            2, HEIGHT // 4 + GRID_WIDTH)
 NEXT_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 8
 SCORE_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT // 2
 SCORE_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 5 // 8
 LEVEL_TEXT_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 3 // 4
 LEVEL_POS = WIDTH - HUD_WIDTH // 2, HEIGHT * 7 // 8
+GAMENAME_HEIGHT = 100  # Game Name Height
+MANUAL_HUD_POS = 110, 450  # Manual HUD Position
+GAMEMESSAGE_HEIGHT = 300  # Game Message Height
+SCOREMESSAGE_HEIGHT = 400  # Score Message Heigh
+
 # Font Path
+TITLE_FONT = pg.font.Font('assets/font/Red October.ttf', 100)
 GAME_FONT = pg.font.Font('assets/font/Red October.ttf', 40)
 
 # Game Events
 FALL_TRIGGER = pg.USEREVENT + 1  # Tetrimino Fall
 ANIM_TRIGGER = pg.USEREVENT + 2  # Tetrimino Animation
 FAST_FALL_TRIGGER = pg.USEREVENT + 3  # Tetrimino Fast Fall
-
-# TETROMINO_LOCKED = pg.USEREVENT + 1
+NEXT_MUSIC = pg.USEREVENT + 4  # Next Music
 
 # Event Frequence and Delay Time
 FALL_FREQ = 500  # Tetrimino Fall Frequency
-ANIM_TRIGGER_FREQ = 150  # Tetrimino Animation Frequency
+ANIM_TRIGGER_FREQ = 100  # Tetrimino Animation Frequency
 FAST_FALL_FREQ = 15  # Tetrimino Fast Fall Frequency
 
-GAMEOVER_DELAY = 300 # Game Over Delay
+GAMEOVER_DELAY = 3000  # Game Over Delay
 
 # Image Path
 TETROMINO_TILES = 'assets/tetrominos/tetromino_tiles.png'
+MANUAL_HUD = 'assets/hud/manual.png'
 
 TETROMINO_TILETYPE = {
     'O': 0,
@@ -79,7 +87,13 @@ TETROMINO_TILETYPE = {
 }
 
 # Sound Path
-
+PREGAME_MUSIC = 'assets/sound/Korobeiniki.mp3'
+GAMEOVER_MUSIC = 'assets/sound/sndGameOver.ogg'
+LINE_CLEAR_SOUND = 'assets/sound/sndLineClear.ogg'
+FOURLINE_CLEAR_SOUND = 'assets/sound/sndFourLinesClear.ogg'
+ROTATE_SOUND = 'assets/sound/sndRotateLeft.ogg'
+LEVELUP_SOUND = 'assets/sound/sndLevelUp.ogg'
+LANDING_SOUND = 'assets/sound/sndTetronimoLanding.ogg'
 
 # Tetromino Shapes
 TETROMINOES = {
@@ -93,43 +107,43 @@ TETROMINOES = {
 }
 
 TETROMINO_ROTATIONS = {
-'O': [
-    [(0, 0), (-1, 0), (-1, -1), (0, -1)]  # 0 degrees
-],
+    'O': [
+        [(0, 0), (-1, 0), (-1, -1), (0, -1)]  # 0 degrees
+    ],
 
-'T': [
-    [(0, 0), (-1, 0), (1, 0), (0, -1)],   # 0 degrees
-    [(0, 0), (0, 1), (0, -1), (-1, 0)],   # 90 degrees
-    [(0, 0), (1, 0), (-1, 0), (0, 1)],    # 180 degrees
-    [(0, 0), (0, -1), (0, 1), (1, 0)]     # 270 degrees
-],
+    'T': [
+        [(0, 0), (-1, 0), (1, 0), (0, -1)],   # 0 degrees
+        [(0, 0), (0, 1), (0, -1), (-1, 0)],   # 90 degrees
+        [(0, 0), (1, 0), (-1, 0), (0, 1)],    # 180 degrees
+        [(0, 0), (0, -1), (0, 1), (1, 0)]     # 270 degrees
+    ],
 
-'S': [
-    [(0, 0), (-1, 0), (0, -1), (1, -1)],  # 0 degrees
-    [(0, 0), (0, 1), (-1, 0), (-1, -1)]   # 90 degrees
-],
+    'S': [
+        [(0, 0), (-1, 0), (0, -1), (1, -1)],  # 0 degrees
+        [(0, 0), (0, 1), (-1, 0), (-1, -1)]   # 90 degrees
+    ],
 
-'Z': [
-    [(0, 0), (1, 0), (-1, -1), (0, -1)],  # 0 degrees
-    [(0, 0), (0, 1), (1, -1), (1, 0)]     # 90 degrees
-],
+    'Z': [
+        [(0, 0), (1, 0), (-1, -1), (0, -1)],  # 0 degrees
+        [(0, 0), (0, 1), (1, -1), (1, 0)]     # 90 degrees
+    ],
 
-'J': [
-    [(0, 0), (-1, 0), (0, -1), (0, -2)],  # 0 degrees
-    [(0, 0), (0, 1), (-1, 0), (-2, 0)],    # 90 degrees
-    [(0, 0), (1, 0), (0, 1), (0, 2)],     # 180 degrees
-    [(0, 0), (0, -1), (1, 0), (2, 0)]   # 270 degrees
-],
+    'J': [
+        [(0, 0), (-1, 0), (0, -1), (0, -2)],  # 0 degrees
+        [(0, 0), (0, 1), (-1, 0), (-2, 0)],    # 90 degrees
+        [(0, 0), (1, 0), (0, 1), (0, 2)],     # 180 degrees
+        [(0, 0), (0, -1), (1, 0), (2, 0)]   # 270 degrees
+    ],
 
-'L': [
-    [(0, 0), (1, 0), (0, -1), (0, -2)],   # 0 degrees
-    [(0, 0), (0, -1), (-1, 0), (-2, 0)],    # 90 degrees
-    [(0, 0), (-1, 0), (0, 1), (0, 2)],    # 180 degrees
-    [(0, 0), (0, 1), (1, 0), (2, 0)]   # 270 degrees
-],
+    'L': [
+        [(0, 0), (1, 0), (0, -1), (0, -2)],   # 0 degrees
+        [(0, 0), (0, -1), (-1, 0), (-2, 0)],    # 90 degrees
+        [(0, 0), (-1, 0), (0, 1), (0, 2)],    # 180 degrees
+        [(0, 0), (0, 1), (1, 0), (2, 0)]   # 270 degrees
+    ],
 
-'I': [
-    [(0, 0), (0, 1), (0, -1), (0, -2)],   # 0 degrees
-    [(0, 0), (-1, 0), (1, 0), (2, 0)]     # 90 degrees
-]
+    'I': [
+        [(0, 0), (0, 1), (0, -1), (0, -2)],   # 0 degrees
+        [(0, 0), (-1, 0), (1, 0), (2, 0)]     # 90 degrees
+    ]
 }
