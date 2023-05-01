@@ -11,7 +11,7 @@ vec = pg.math.Vector2
 
 # Game Play Settings
 FPS = 60
-LEVELUP_LINES = 20
+LEVELUP_LINES = 10
 LEVELUP_FREQ = 20
 
 MOVEMENTS = {
