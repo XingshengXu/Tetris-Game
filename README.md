@@ -35,16 +35,16 @@ Troubleshooting:
 
 ## Game Screen Demos
 <p align="center">
-![demo1](https://user-images.githubusercontent.com/125934684/235546618-0879ab83-8562-4589-a51f-fd1136e15869.png)
+  <img src="https://user-images.githubusercontent.com/125934684/235546618-0879ab83-8562-4589-a51f-fd1136e15869.png" alt="demo1">
 </p>
 <p align="center">
-![demo2](https://user-images.githubusercontent.com/125934684/235546623-f9392312-a8c8-40e4-a0e0-460bb79dcf9b.png)
+  <img src="https://user-images.githubusercontent.com/125934684/235546623-f9392312-a8c8-40e4-a0e0-460bb79dcf9b.png" alt="demo2">
 </p>
 <p align="center">
-![demo3](https://user-images.githubusercontent.com/125934684/235546628-94542f14-98c2-4451-8239-198ad3b7e7eb.png)
+  <img src="https://user-images.githubusercontent.com/125934684/235546628-94542f14-98c2-4451-8239-198ad3b7e7eb.png" alt="demo3">
 </p>
 <p align="center">
-![demo4](https://user-images.githubusercontent.com/125934684/235546636-41834da3-115e-4d9c-be6f-66abbc6cdd4b.png)
+  <img src="https://user-images.githubusercontent.com/125934684/235546636-41834da3-115e-4d9c-be6f-66abbc6cdd4b.png" alt="demo4">
 </p>
 
 **Are you prepared to test your wits and reflexes against the relentless cascade of Tetrominoes? It's time to stack, clear, and conquer the Tetris challenge!**
