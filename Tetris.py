@@ -24,6 +24,11 @@ def load_sprite_sheet(sheet_path, sprite_width, sprite_height, needScale2x=False
         sprites.append(surface)
     return sprites
 
+def render_font(text, font, color, center):
+    """Renders a given text using the specified font and color."""
+    rendered_text = font.render(text, True, color)
+    rendered_text_rect = rendered_text.get_rect(center=center)
+    return rendered_text, rendered_text_rect
 
 class Block(pg.sprite.Sprite):
     def __init__(self, tetromino, coord):
@@ -32,6 +37,7 @@ class Block(pg.sprite.Sprite):
         self.coord = vec(coord) + TETROMINO_SPAWN_OFFSET
         self.image = self.tetromino.image
         self.rect = self.image.get_rect(topleft=self.coord * GRID_WIDTH)
+        self.alive = True
 
     def block_move(self):
         self.rect.topleft = self.coord * GRID_WIDTH
@@ -45,8 +51,10 @@ class Block(pg.sprite.Sprite):
         translated_idx = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx_prev].index(translated_coord)
         rotated_coord  = TETROMINO_ROTATIONS[self.tetromino.type][rotation_idx][translated_idx]
         return vec(rotated_coord) + origin_coord
-    
-        
+
+    def block_destory(self):
+        if not self.alive:
+            self.kill()
 
     def check_collision(self, coord):
         x, y = int(coord.x), int(coord.y)
@@ -55,6 +63,7 @@ class Block(pg.sprite.Sprite):
         return True
 
     def update(self):
+        self.block_destory()
         self.block_move()
 
 
@@ -130,21 +139,28 @@ class Tetromino():
         if game.anim_trigger:
             self.tetromino_move()
         if self.landing:
-            self.speed_up = False
-            self.put_tetromino_blocks_in_array()
-            pg.time.delay(500)
-            game.current_tetromino = game.spawn_tetromino()
+            if game.is_game_over():
+                game.__init__()
+            else:
+                self.speed_up = False
+                self.put_tetromino_blocks_in_array()
+                game.current_tetromino = game.spawn_tetromino()
 
 
 class Game:
 
     def __init__(self):
         self.setup()
-        self.load_images()
+        self.load_resources()
         self.field_array = self.get_field_array()
         self.tetrominos = pg.sprite.Group()
+        self.next_tetromino = self.generate_tetromino()
         self.current_tetromino = self.spawn_tetromino()
-        
+        self.score = 0
+        self.level = 0
+        self.full_lines = 0
+        self.total_lines = 0
+
     def setup(self):
         self.game_active = False
         self.clock = pg.time.Clock()
@@ -153,11 +169,22 @@ class Game:
         self.set_timer()
 
     def load_resources(self):
+        self.load_fonts()
         self.load_images()
+        self.load_sounds()
+
+    def load_fonts(self):
+        self.next_text, self.next_text_rect = render_font(
+            'Next', GAME_FONT, 'white', NEXT_TEXT_POS)
+        self.score_text, self.score_text_rect = render_font(
+            'Score', GAME_FONT, 'white', SCORE_TEXT_POS)
+        self.level_text, self.level_text_rect = render_font(
+            'Level', GAME_FONT, 'white', LEVEL_TEXT_POS)
 
     def load_images(self):
+        pass    
+    def load_sounds(self):
         pass
-
     def draw_grid(self):
         x, y = 0, 0
         for _ in range(ROW_NUMBER + 1):
@@ -169,9 +196,47 @@ class Game:
 
     def draw_background(self):
         self.screen.fill('black')
+        self.draw_next_tetromino()
+        self.display_HUD()
 
     def get_field_array(self):
         return [[0 for x in range(FIELD_WIDTH)] for y in range(FIELD_HEIGHT)]
+
+    def check_full_lines(self):
+        row = FIELD_HEIGHT - 1
+        for y in range(FIELD_HEIGHT - 1, -1, -1):
+            for x in range(FIELD_WIDTH):
+                self.field_array[row][x] = self.field_array[y][x]
+
+                if self.field_array[y][x]:
+                    self.field_array[row][x].coord = vec(x, y)
+            if sum(map(bool, self.field_array[y])) < FIELD_WIDTH:
+                row -= 1
+            else:
+                for x in range(FIELD_WIDTH):
+                    self.field_array[row][x].alive = False
+                    self.field_array[row][x] = 0
+                self.full_lines += 1
+
+    def update_fall_speed(self):
+        levup_fall_freq = max(FAST_FALL_FREQ, FALL_FREQ - self.level * LEVELUP_FREQ)
+        pg.time.set_timer(FALL_TRIGGER, levup_fall_freq)
+
+    def cal_score(self):
+        self.score += REWARD_POINTS[self.full_lines] * (self.level + 1)
+        self.total_lines += self.full_lines 
+        self.full_lines = 0
+
+    def cal_level(self):
+        previous_level = self.level
+        self.level = self.total_lines // LEVELUP_LINES
+        if previous_level != self.level:
+            self.update_fall_speed()
+
+    def is_game_over(self):
+        if self.current_tetromino.blocks[0].coord.y == TETROMINO_SPAWN_OFFSET[1]:
+            pg.time.delay(GAMEOVER_DELAY)
+            return True
 
     def set_timer(self):
         self.fall_trigger = False
@@ -181,11 +246,38 @@ class Game:
         pg.time.set_timer(ANIM_TRIGGER, ANIM_TRIGGER_FREQ)
         pg.time.set_timer(FAST_FALL_TRIGGER, FAST_FALL_FREQ)
 
+    def generate_tetromino(self):
+        return Tetromino()
+    
     def spawn_tetromino(self):
-        new_tetromino = Tetromino()
+        new_tetromino = self.next_tetromino
+        self.next_tetromino = self.generate_tetromino()
         self.tetrominos.add(new_tetromino.blocks)
         return new_tetromino
 
+    def draw_next_tetromino(self):
+        for block in self.next_tetromino.blocks:
+            block_image = block.image
+            block_rect = block_image.get_rect(topleft=(block.coord * GRID_WIDTH) + NEXT_TETROMINO_OFFSET)
+            self.screen.blit(block_image, block_rect)
+
+    def display_HUD(self):
+        self.screen.blit(self.next_text, self.next_text_rect)
+        self.screen.blit(self.score_text, self.score_text_rect)
+        self.screen.blit(self.level_text, self.level_text_rect)
+        self.display_score()
+        self.display_level()
+
+    def display_score(self):
+        """Display the score on the screen."""
+        score, score_rect = render_font(f'{self.score}', GAME_FONT, 'white', SCORE_POS)
+        self.screen.blit(score, score_rect)
+    
+    def display_level(self):
+        """Display the level on the screen."""
+        level, level_rect = render_font(f'{self.level}', GAME_FONT, 'white', LEVEL_POS)
+        self.screen.blit(level, level_rect)
+        
     def handle_events(self):
         self.fall_trigger = False
         self.anim_trigger = False
@@ -201,28 +293,29 @@ class Game:
             if event.type == FAST_FALL_TRIGGER:
                 self.fast_fall_trigger = True
 
+    def game_update(self):
+        # Handle Events
+        self.handle_events()
+        # Display Game Background
+        self.draw_background()
+        # Update Tetromino
+        self.current_tetromino.update()
+        # Draw Sprites
+        self.tetrominos.draw(self.screen)
+        # Update Sprites
+        self.tetrominos.update()
+        # Draw Grid
+        self.draw_grid()
+        self.check_full_lines()
+        self.cal_score()
+        self.cal_level()
+
+
     def main_loop(self):
         """This is the game main loop."""
         while True:
             self.clock.tick(FPS)
-
-            # Handle Events
-            self.handle_events()
-
-            # Display Game Background
-            self.draw_background()
-
-            # Update Tetromino
-            self.current_tetromino.update()
-
-            # Draw Sprites
-            self.tetrominos.draw(self.screen)
-            # Update Sprites
-            self.tetrominos.update()
-
-            # Draw Grid
-            self.draw_grid()
-
+            self.game_update()
             pg.display.update()
 
 
